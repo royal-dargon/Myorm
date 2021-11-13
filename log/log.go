@@ -2,6 +2,7 @@
 package log
 
 import (
+	"io/ioutil"
 	"log"
 	"os"
 	"sync"
@@ -24,3 +25,33 @@ var (
 	Info   = infoLog.Println
 	Infof  = infoLog.Printf
 )
+
+// 下面开始支持设置日志的层数
+// log levels
+const (
+	InfoLevel = iota
+	ErrorLevel
+	Disabled
+)
+
+// SetLevel controls log level
+func SetLevel(level int) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	for _, logger := range loggers {
+		// 设置标准logger的输出目的地
+		logger.SetOutput(os.Stdout)
+	}
+
+	if ErrorLevel < level {
+		// 不做操作
+		infoLog.SetOutput(ioutil.Discard)
+	}
+	if InfoLevel < level {
+		infoLog.SetOutput(ioutil.Discard)
+	}
+}
+
+// 以上部分就是决定了三个层级是否进行打印
+// 然后log就完成了
